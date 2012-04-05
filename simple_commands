@@ -1,0 +1,693 @@
+  Så länge allt har indentering här så kommer det aldrig att tolkas!
+  --------------------------------------------------------------------
+
+  vad har $ och $ skrivit tillsammans
+
+      SELECT * FROM artikel NATURAL JOIN
+      (
+        (
+          SELECT artid FROM artikel NATURAL JOIN skrev NATURAL JOIN författare
+          WHERE författare.namn = ?
+        )
+        INTERSECT
+        (
+          SELECT artid FROM artikel NATURAL JOIN skrev NATURAL JOIN författare
+          WHERE författare.namn = ?
+        )
+      ) AS foobar;
+
+  -------------------------------------------------------------------
+
+
+
+vilka referenser finns i $
+
+    SELECT till.* AS titel
+    FROM refererar, artikel AS till, artikel AS från
+    WHERE xreffrån = från.artid AND xreftill = till.artid AND från.arttitel = ?;
+
+
+vilka referenser finns i id #
+
+    SELECT till.* AS titel
+    FROM refererar, artikel AS till
+    WHERE xreffrån = # AND xreftill = till.artid;
+
+
+vilka artiklar refererar till $
+
+    SELECT från.* AS titel
+    FROM refererar, artikel AS från, artikel AS till
+    WHERE xreffrån = från.artid AND xreftill = till.artid AND till.arttitel = ?;
+
+
+vilka artiklar refererar till id #
+
+    SELECT från.* AS titel
+    FROM refererar, artikel AS från
+    WHERE xreffrån = från.artid AND xreftill = #;
+
+
+vilka tidsskrifter finns
+
+    SELECT *
+    FROM tidsskrift;
+
+
+vad handlar $ om
+
+    SELECT inriktning
+    FROM tidsskrift
+    WHERE titel = ?;
+
+
+vad handlar id # om
+
+    SELECT inriktning
+    FROM tidsskrift
+    WHERE tsid = #;
+
+
+vilka tidsskrifter handlar om $
+
+    SELECT tsid, title
+    FROM tidsskrift
+    WHERE inriktning = ?;
+
+
+vilka artiklar finns
+
+    SELECT *
+    FROM tidsskrift NATURAL JOIN nummer NATURAL JOIN artikel;
+
+
+vilka artiklar skrevs #
+
+    SELECT *
+    FROM tidsskrift NATURAL JOIN nummer NATURAL JOIN artikel
+    WHERE pubår = #;
+
+
+vilka artiklar skrevs #-#
+
+    SELECT *
+    FROM tidsskrift NATURAL JOIN nummer NATURAL JOIN artikel
+    WHERE pubår = # AND pubmånd = #;
+
+
+vilka artiklar skrevs #-#-#
+
+    SELECT *
+    FROM tidsskrift NATURAL JOIN nummer NATURAL JOIN artikel
+    WHERE pubår = # AND pubmånad = # AND pubdag = #;
+
+
+vilka artiklar skrevs # i $
+
+    SELECT *
+    FROM tidsskrift NATURAL JOIN nummer NATURAL JOIN artikel
+    WHERE pubår = # AND titel = ?;
+
+
+vilka artiklar skrevs #-# i $
+
+    SELECT *
+    FROM tidsskrift NATURAL JOIN nummer NATURAL JOIN artikel
+    WHERE pubår = # AND pubmånd = # AND titel = ?;
+
+
+vilka artiklar skrevs #-#-# i $
+
+    SELECT *
+    FROM tidsskrift NATURAL JOIN nummer NATURAL JOIN artikel
+    WHERE pubår = # AND pubmånad = # AND pubdag = # AND title = ?;
+
+
+vilka artiklar skrevs # i id #
+
+    SELECT *
+    FROM tidsskrift NATURAL JOIN nummer NATURAL JOIN artikel
+    WHERE pubår = # AND tsid = #;
+
+
+vilka artiklar skrevs #-# i id # 
+
+    SELECT *
+    FROM tidsskrift NATURAL JOIN nummer NATURAL JOIN artikel
+    WHERE pubår = # AND pubmånd = # AND tsid = #;
+
+
+vilka artiklar skrevs #-#-# i id #
+
+    SELECT *
+    FROM tidsskrift NATURAL JOIN nummer NATURAL JOIN artikel
+    WHERE pubår = # AND pubmånad = # AND pubdag = # AND tsid = #;
+
+
+vilka nummer finns
+
+    SELECT *
+    FROM tidsskrift NATURAL JOIN nummer;
+
+
+vilka nummer finns i $
+
+    SELECT *
+    FROM tidsskrift NATURAL JOIN nummer
+    WHERE titel = ?;
+
+
+vilka nummer finns i id #
+
+    SELECT *
+    FROM tidsskrift NATURAL JOIN nummer
+    WHERE tsid = #;
+
+
+vilka nummer skrevs # i $
+
+    SELECT *
+    FROM tidsskrift NATURAL JOIN nummer
+    WHERE pubår = # AND titel = ?;
+
+
+vilka nummer skrevs # i id #
+
+    SELECT *
+    FROM tidsskrift NATURAL JOIN nummer
+    WHERE pubår = # AND tsid = #;
+
+
+vilka nummer skrevs #
+
+    SELECT *
+    FROM tidsskrift NATURAL JOIN nummer
+    WHERE pubår = #;
+
+
+hur många nummer har tidsskifterna publiserat sammanlagt
+
+    SELECT count(nrid)
+    FROM tidsskrift NATURAL JOIN nummer;
+
+
+hur många nummer har tidsskifterna publiserat
+
+    SELECT count(nrid)
+    FROM tidsskrift NATURAL JOIN nummer
+    GROUP BY tsid;
+
+
+hur många nummer har tidsskifterna publiserat i snitt
+
+    SELECT avg(count) FROM
+    (
+      SELECT count(nrid)
+      FROM tidsskrift NATURAL JOIN nummer
+      GROUP BY tsid
+    ) AS foobar;
+
+
+hur många nummer har tidsskifterna publiserat #
+
+    SELECT count(nrid)
+    FROM tidsskrift NATURAL JOIN nummer
+    WHERE pubår = #
+    GROUP BY tsid;
+
+
+hur många nummer har tidsskifterna publiserat #-#
+
+    SELECT count(nrid)
+    FROM tidsskrift NATURAL JOIN nummer
+    WHERE pubår = # AND pubmånad = #
+    GROUP BY tsid;
+
+
+hur många nummer har tidsskifterna publiserat #-#-#
+
+    SELECT count(nrid)
+    FROM tidsskrift NATURAL JOIN nummer
+    WHERE pubår = # AND pubmånad = # AND pubdag = #
+    GROUP BY tsid;
+
+
+hur många nummer har tidsskifterna publiserat # i snitt
+
+    SELECT avg(count) FROM
+    (
+      SELECT count(nrid)
+      FROM tidsskrift NATURAL JOIN nummer
+      WHERE pubår = #
+      GROUP BY tsid
+    ) AS foobar;
+
+
+hur många nummer har tidsskifterna publiserat #-# i snitt
+
+    SELECT avg(count) FROM
+    (
+      SELECT count(nrid)
+      FROM tidsskrift NATURAL JOIN nummer
+      WHERE pubår = # AND pubmånad = #
+      GROUP BY tsid
+    ) AS foobar;
+
+
+hur många nummer har tidsskifterna publiserat #-#-# i snitt
+
+    SELECT avg(count) FROM
+    (
+      SELECT count(nrid)
+      FROM tidsskrift NATURAL JOIN nummer
+      WHERE pubår = # AND pubmånad = # AND pubdag = #
+      GROUP BY tsid
+    ) AS foobar;
+
+
+hur många nummer har tidsskifterna publiserat per år
+
+    SELECT count(nrid)
+    FROM tidsskrift NATURAL JOIN nummer
+    GROUP BY (tsid, pubår);
+
+
+hur många nummer har tidsskifterna publiserat per månad
+
+    SELECT count(nrid)
+    FROM tidsskrift NATURAL JOIN nummer
+    GROUP BY (tsid, pubår, pubmånad);
+
+
+hur många nummer har tidsskifterna publiserat per dag
+
+    SELECT count(nrid)
+    FROM tidsskrift NATURAL JOIN nummer
+    GROUP BY (tsid, pubår, pubmånad, pubdag);
+
+
+hur många nummer har tidsskifterna publiserat sammanligt per år
+
+    SELECT count(nrid)
+    FROM tidsskrift NATURAL JOIN nummer
+    GROUP BY pubår;
+
+
+hur många nummer har tidsskifterna publiserat sammanligt per månad
+
+    SELECT count(nrid)
+    FROM tidsskrift NATURAL JOIN nummer
+    GROUP BY (pubår, pubmånad);
+
+
+hur många nummer har tidsskifterna publiserat sammanligt per dag
+
+    SELECT count(nrid)
+    FROM tidsskrift NATURAL JOIN nummer
+    GROUP BY (pubår, pubmånad, pubdag);
+
+
+hur många nummer har tidsskifterna publiserat per år i snitt
+
+    SELECT avg(count) FROM
+    (
+      SELECT count(nrid)
+      FROM tidsskrift NATURAL JOIN nummer
+      GROUP BY (tsid, pubår)
+    ) AS foobar;
+
+
+hur många nummer har tidsskifterna publiserat per månad i snitt
+
+    SELECT avg(count) FROM
+    (
+      SELECT count(nrid)
+      FROM tidsskrift NATURAL JOIN nummer
+      GROUP BY (tsid, pubår, pubmånad)
+    ) AS foobar;
+
+
+hur många nummer har tidsskifterna publiserat per dag i snitt
+
+    SELECT avg(count) FROM
+    (
+      SELECT count(nrid)
+      FROM tidsskrift NATURAL JOIN nummer
+      GROUP BY (tsid, pubår, pubmånad, pubdag)
+    ) AS foobar;
+
+
+hur många nummer har tidsskifterna publiserat sammanlagt per år i snitt
+
+    
+    SELECT avg(count) FROM
+    (
+      SELECT count(nrid)
+      FROM tidsskrift NATURAL JOIN nummer
+      GROUP BY pubår
+    ) AS foobar;
+
+
+hur många nummer har tidsskifterna publiserat sammanlagt per månad i snitt
+
+    SELECT avg(count) FROM
+    (
+      SELECT count(nrid)
+      FROM tidsskrift NATURAL JOIN nummer
+      GROUP BY (pubår, pubmånad)
+    ) AS foobar;
+
+
+hur många nummer har tidsskifterna publiserat sammanlagt per dag i snitt
+
+    SELECT avg(count) FROM
+    (
+      SELECT count(nrid)
+      FROM tidsskrift NATURAL JOIN nummer
+      GROUP BY (pubår, pubmånad, pubdag)
+    ) AS foobar;
+
+
+hur många nummer har tidsskifterna publiserat årsvid
+
+    SELECT pubår AS år, count(nrid)
+    FROM tidsskrift NATURAL JOIN nummer
+    GROUP BY (tsid, år);
+
+
+hur många nummer har tidsskifterna publiserat månadsvid
+
+    SELECT pubår AS år, pubmånad AS månad, count(nrid)
+    FROM tidsskrift NATURAL JOIN nummer
+    GROUP BY (tsid, år, månad);
+
+
+hur många nummer har tidsskifterna publiserat dagvid
+
+    SELECT pubår AS år, pubmånad AS månad, pubdag AS dag, count(nrid)
+    FROM tidsskrift NATURAL JOIN nummer
+    GROUP BY (tsid, år, månad, dag);
+
+
+hur många nummer har tidsskifterna publiserat sammanlagt årsvid
+
+    SELECT pubår AS år, count(nrid)
+    FROM tidsskrift NATURAL JOIN nummer
+    GROUP BY år;
+
+
+hur många nummer har tidsskifterna publiserat sammanlagt månadsvid
+
+    SELECT pubår AS år, pubmånad AS månad, count(nrid)
+    FROM tidsskrift NATURAL JOIN nummer
+    GROUP BY (år, månad);
+
+
+hur många nummer har tidsskifterna publiserat sammanlagt dagvid
+
+    SELECT pubår AS år, pubmånad AS månad, pubdag AS dag, count(nrid)
+    FROM tidsskrift NATURAL JOIN nummer
+    GROUP BY (år, månad, dag);
+
+
+hur många nummer har tidsskifterna publiserat årsvid i snitt
+
+    SELECT år, avg(count) FROM
+    (
+      SELECT pubår AS år, count(nrid)
+      FROM tidsskrift NATURAL JOIN nummer
+      GROUP BY (tsid, år);
+    ) AS foobar;
+
+
+hur många nummer har tidsskifterna publiserat månadsvis i snitt
+
+    SELECT år, månad, avg(count) FROM
+    (
+      SELECT pubår AS år, pubmånad AS månad, count(nrid)
+      FROM tidsskrift NATURAL JOIN nummer
+      GROUP BY (tsid, år, månad);
+    ) AS foobar;
+
+
+hur många nummer har tidsskifterna publiserat dagvis i snitt
+
+    SELECT år, månad, dag, avg(count) FROM
+    (
+      SELECT pubår AS år, pubmånad AS månad, pubdag AS dag, count(nrid)
+      FROM tidsskrift NATURAL JOIN nummer
+      GROUP BY (tsid, år, månad, dag);
+    ) AS foobar;
+
+
+hur många nummer har tidsskifterna publiserat sammanlagt årsvid i snitt
+
+    SELECT år, avg(count) FROM
+    (
+      SELECT pubår AS år, count(nrid)
+      FROM tidsskrift NATURAL JOIN nummer
+      GROUP BY (år);
+    ) AS foobar;
+
+
+hur många nummer har tidsskifterna publiserat sammanlagt månadsvis i snitt
+
+    SELECT år, månad, avg(count) FROM
+    (
+      SELECT pubår AS år, pubmånad AS månad count(nrid)
+      FROM tidsskrift NATURAL JOIN nummer
+      GROUP BY (år, månad);
+    ) AS foobar;
+
+
+hur många nummer har tidsskifterna publiserat sammanlagt dagvis i snitt
+
+    SELECT år, månad, dag, avg(count) FROM
+    (
+      SELECT pubår AS år, pubmånad AS månad, pubdag AS dag, count(nrid)
+      FROM tidsskrift NATURAL JOIN nummer
+      GROUP BY (år, månad, dag);
+    ) AS foobar;
+
+
+vilka författare finns det
+    SELECT *
+    FROM författare;
+
+
+vilka författare finns det som har titeln $
+    SELECT *
+    FROM författare
+    WHERE titel = ?;
+
+
+vilka författare finns det som heter $
+    SELECT *
+    FROM författare
+    WHERE namn = ?;
+
+
+vilka författare finns det som är anställda i $
+    SELECT *
+    FROM författare
+    WHERE anstort = ?;
+
+
+vilka har skrivit $
+    SELECT författare.*
+    FROM tidsskrift NATURAL JOIN nummer NATURAL JOIN artikel NATURAL JOIN skrev NATURAL JOIN författare
+    WHERE arttitel = ?;
+
+
+vilka har skrivit id #
+    SELECT författare.*
+    FROM tidsskrift NATURAL JOIN nummer NATURAL JOIN artikel NATURAL JOIN skrev NATURAL JOIN författare
+    WHERE artid = #;
+
+
+för vilka tidningar har $ skrivit
+
+    SELECT distinct tidsskrift.titel
+    FROM tidsskrift NATURAL JOIN nummer NATURAL JOIN artikel NATURAL JOIN skrev NATURAL JOIN författare
+    WHERE författare.namn = ?;
+
+
+byt namn på # till $
+
+    UPDATE författare SET namn = ?1
+    WHERE fid = #0
+    RETURNING *;
+
+
+byt titel på # till $
+
+    UPDATE författare SET titel = ?1
+    WHERE fid = #0
+    RETURNING *;
+
+
+byt anställningsort för # till $
+
+    UPDATE författare SET titel = ?1
+    WHERE anstort = #0
+    RETURNING *;
+
+
+byt namn på tidsskrift # till $
+
+    UPDATE tidsskrift SET titel = ?1
+    WHERE tsid = #0
+    RETURNING *;
+
+
+byt inriktning på tidsskrift # till $
+
+    UPDATE tidsskrift SET titel = ?1
+    WHERE inriktning = #0
+    RETURNING *;
+
+
+byt publiseringsår på # till #
+
+    UPDATE nummer SET pubår = #1
+    WHERE nrid = #0
+    RETURNING *;
+
+
+byt publiseringsmånad på # till #
+
+    UPDATE nummer SET pubmånad = #1
+    WHERE nrid = #0
+    RETURNING *;
+
+
+byt publiseringsdag på # till #
+
+    UPDATE nummer SET pubdag = #1
+    WHERE nrid = #0
+    RETURNING *;
+
+
+byt publiseringsdatum på # till #-#-#
+
+    UPDATE nummer SET pubår = #1 AND pubmånad = #2 pubdag = #3
+    WHERE nrid = #0
+    RETURNING *;
+
+
+byt årsnummer på # till #
+
+    UPDATE nummer SET pubår = #1 AND pubmånad = #2 pubdag = #3
+    WHERE nrid = #0
+    RETURNING *;
+
+
+byt titel på artikel # till $
+
+    UPDATE artikel SET arttitle = ?1
+    WHERE artid = #0
+    RETURNING *;
+
+
+tag bort författare #
+
+    DELETE FROM författare WHERE fid = #
+    RETURNING *;
+
+
+tag bort artikel #
+
+    DELETE FROM artikel WHERE artid = #
+    RETURNING *;
+
+
+tag bort nummer #
+
+    DELETE FROM nrid WHERE nrid = #
+    RETURNING *;
+
+
+tag bort tidsskrift #
+
+    DELETE FROM tidsskrift WHERE tsid = #
+    RETURNING *;
+
+
+tag bort referens från # till #
+
+    DELETE FROM refererar WHERE xreffrån = # AND xreftill = #
+    RETURNING *;
+
+
+tag bort referenser från #
+
+    DELETE FROM refererar WHERE xreffrån = #
+    RETURNING *;
+
+
+tag bort referenser till #
+
+    DELETE FROM refererar WHERE xreftill = #
+    RETURNING *;
+
+
+tag bort nummer med årsnummer # år # för #
+
+    DELETE FROM författare WHERE fid = #
+    RETURNING *;
+
+
+lägg till tidsskrift $ med inriktning $
+
+    INSERT INTO tidsskrift (namn, inriktning) VALUES (?, ?)
+    RETURNING *;
+
+
+lägg till nummer för # med publiserad #-#-#
+
+    INSERT INTO nummer (tsid, pubår, pubmånad, pubdag, årnr) VALUES (#0, #1, #2, #3,
+      SELECT max(val) + 1 FROM
+      (
+        (
+          SELECT count(årnr) AS val FROM nummer WHERE tsid = #0 AND pubår = #1
+        )
+        UNION
+        (
+          SELECT max(årnr) AS val FROM nummer WHERE tsid = #0 AND pubår = #1
+        )
+      ) AS foobar
+    )
+    RETURNING *;
+
+
+lägg till författare # till artikel #
+
+    INSERT INTO skrev (fid, artid) VALUES (#, #)
+    RETURNING *;
+
+
+lägg till författare $ $ anställd i $
+
+    INSERT INTO författare (titel, namn, anstort) VALUES (?, ?, ?)
+    RETURNING *;
+
+
+lägg till referens från # till #
+
+    INSERT INTO refererar (xreffrån, xreftill) VALUES (#, #)
+    RETURNING *;
+
+
+tag bort titel från #
+    
+    UPDATE författare SET titel = NULL
+    WHERE fid = #
+    RETURNING *;
+
+
+tag bort anställningsort från #
+    
+    UPDATE författare SET anstsort = NULL
+    WHERE fid = #
+    RETURNING *;
+

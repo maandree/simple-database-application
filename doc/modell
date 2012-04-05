@@ -1,0 +1,218 @@
+
+Konceptuell modell
+────────────────────
+
+        ┌────────────┐         ┌────────┐          ┌───────────────┐           ┌────────────┐
+        │            │ ts_nr ┌─┤        │ nr_art ┌─┤               ├─┐ Skrev ┌─┤            │
+        │ Tidsskrift ├───────┼─┤ Nummer ├────────┼─┤    Artikel    ├─┼───────┼─┤ Författare │
+        │            │       └─┤        │        └─┤               ├─┘       └─┤            │
+        └────────────┘         └────────┘          └┬─┬─┬─────┬─┬─┬┘           └────────────┘
+                                                    └─┼─┘     └─┼─┘
+                                                      │         │
+                                                      │         │
+                                                      └─────────┘
+                                                       Refererar
+
+
+
+Egenskapsmatris
+─────────────────
+
+        ┌──────────┬──────────────┬────────────────┬─────────────────────────────────┐
+        │  Typ::   │  Namn::      │  I─termer::    │  E─termer::                     │
+        ├──────────┼──────────────┼────────────────┼─────────────────────────────────┤
+        │  Objekt  │  Tidsskrift  │  tsid          │  namn, inriktning               │
+        │  Objekt  │  Nummer      │  nrid          │  pubår, årnr, pubmånad, pubdag  │
+        │  Objekt  │  Artikel     │  artid         │  arttitle                       │
+        │  Objekt  │  Författare  │  fid           │  namn, titel, anstort           │
+        ├──────────┼──────────────┼────────────────┼─────────────────────────────────┤
+        │  1:N-s.  │  ts_nr       │  tsid, nrid    │  -                              │
+        │  1:N-s.  │  nr_art      │  nrid, artid   │  -                              │
+        │  M:N-s.  │  Skrev       │  artid, fid    │  -                              │
+        │  M:N-s.  │  Refererar   │  artid, artid  │  -                              │
+        └──────────┴──────────────┴────────────────┴─────────────────────────────────┘
+
+
+
+Databasstruktur
+─────────────────
+
+        Tidsskrift ((tsid),   namn,  inriktning)
+            Nummer ((nrid),   tsid,  pubår,  årnr,  pubmånad,  pubdag)
+           Artikel ((artid),  nrid,  arttitel)
+        Författare ((fid),    namn,  title,  anstort)
+             Skrev ((artid,  fid))
+         Refererar ((xreffrån,  xreftill))
+
+
+
+Funktionella beroenden
+────────────────────────
+
+        tsid ──→ T.namn,  inriktning
+        nrid ──→ tsid,  pubår,  årnr,  pubmånad,  pubdag,  T.namn, inriktning
+        artid ──→ nrid,  arttitel,  tsid,  pubår,  årnr,  pubmånad,  pubdag,  T.namn, inriktning
+        fid ──→ F.namn,  title,  anstort
+        tsid, pubår, årnr ──→ nrid ──→ pubmånad,  pubdag,  T.namn, inriktning
+
+
+
+Kandidatnycklar
+─────────────────
+
+        artid, fid
+
+
+
+Primärnyckel
+───────────────
+
+        artid, fid
+
+
+
+Komplett databasstruktur med restriktioner
+────────────────────────────────────────────
+
+        # Primärnyckel
+        ! Gemensamt unik
+        : Ingen restriktion
+        $ Sekundärnyckel
+        £ Sekundärnyckel och gemensamt unik
+        
+        ?        Nullable
+        <++>     Uppräknandes
+        <++:()>  Uppräknandes, och omstartande för nya värden av ()
+        <f:()>   Främmande nyckel ()
+        <fc:()>   Främmande nyckel () med ON DELTETE CASCADE
+        
+        
+        (**
+            int16 = word = short = sql:int2 = sql:smallint
+            int32 = dword = int = sql:int4 = sql:integer
+            int64 = qword = long = sql:int8 = sql:bigint
+            int32<++> = sql:serial
+            int64<++> = sql:bigserial
+        )
+
+
+
+        Tidsskrift::    tsid       # int32<++>
+                        namn       : varchar(64)
+                        inriktning : varchar(64)
+
+
+        Nummer::        nrid       # int32<++>
+                        tsid       £ int32<f:Tidsskrift.tsid>
+                        pubår      ! int16 > 0
+                        årnr       ! int16<++:(tsid, pubår)>
+                        pubmånad   : int8 ∈ [1; 12]
+                        pubdag     : int8 ∈ [1; {...}[pubmånad]]
+
+
+        Artikel::       artid      # int32<++>
+                        nrid       $ int32<f:Nummer.nrid>
+                        arttitel   $ varchar(128)			; Det finns många(!) artiklar, och vi vill söka via deras namn
+
+
+        Författare::    fid        # int32<++>
+                        namn       : text
+                        title      : varchar(16)?
+                        anstort    : varchar(48)?
+
+                        (**
+                            Att ha en tabell för anställningsorter försvårar
+                            processen att ta bort anställningsorter som ingen
+                            är anställd på, dock hade det varit möjligt, men
+                            inte automatiskt utan en extra SQL-sats.
+                            Vi antar dessutom att det inte finns allt för
+                            många författare eller att orterna har speciellt
+                            långa namn.
+                        )
+
+
+        Skrev::         artid      # int32<fc:Artikel.artid>
+                        fid        # int32<f:Författare.fid>
+
+
+        Refererar::     xreffrån   # int32<fc:Artikel.artid>
+                        xreftill   # int32<f:Artikel.artid>
+
+
+
+Uppbyggnad av database
+────────────────────────────────────────────
+
+CREATE TABLE tidsskrift
+(
+    tsid SERIAL,
+    namn VARCHAR(64) NOT NULL,
+    inriktning VARCHAR(64) NOT NULL,
+    PRIMARY KEY (tsid)
+);
+
+CREATE TABLE nummer
+(
+    nrid SERIAL,
+    tsid INTEGER,
+    "pubår" SMALLINT NOT NULL CHECK (pubår > 0),
+    "årnr" SMALLINT NOT NULL,
+    "pubmånad" SMALLINT NOT NULL CHECK (pubmånad BETWEEN 1 AND 12),
+    pubdag SMALLINT NOT NULL CHECK (pubdag BETWEEN 1 AND 31),
+    PRIMARY KEY (nrid),
+    FOREIGN KEY (tsid) REFERENCES tidsskrift(tsid),
+    UNIQUE (tsid, "pubår", "årnr"),
+    CHECK
+    (
+        ( pubdag <= 30 OR pubmånad IN (1, 3, 5, 7, 8, 10, 12) ) AND
+        pubdag <= 29 OR pubmånad != 2
+    ),
+    CHECK
+    (
+        pubdag <= 28 OR pubmånad != 2 OR NOT
+        ( ( mod(pubår, 4) = 0 AND mod(pubår, 100) != 0 ) OR mod(pubår, 400) = 0 )
+    )
+);
+
+CREATE INDEX index_nummer_tsid ON nummer (tsid);
+
+CREATE TABLE artikel
+(
+    artid SERIAL,
+    nrid INTEGER,
+    arttitel VARCHAR(128) NOT NULL,
+    PRIMARY KEY (artid),
+    FOREIGN KEY (nrid) REFERENCES nummer(nrid)
+);
+
+CREATE INDEX index_artikel_nrid ON artikel (nrid);
+CREATE INDEX index_artikel_arttitel ON artikel (arttitel);
+
+CREATE TABLE "författare"
+(
+    fid SERIAL,
+    namn TEXT NOT NULL,
+    titel VARCHAR(16),
+    anstort VARCHAR(48),
+    PRIMARY KEY (fid)
+);
+
+CREATE TABLE skrev
+(
+    artid INTEGER,
+    fid INTEGER,
+    PRIMARY KEY (artid, fid),
+    FOREIGN KEY (artid) REFERENCES artikel(artid) ON DELETE CASCADE,
+    FOREIGN KEY (fid) REFERENCES "författare"(fid)
+);
+
+CREATE TABLE refererar
+(
+    xreffrån INTEGER,
+    xreftill INTEGER,
+    PRIMARY KEY (xreffrån, xreftill),
+    FOREIGN KEY (xreffrån) REFERENCES artikel(artid) ON DELETE CASCADE,
+    FOREIGN KEY (xreftill) REFERENCES artikel(artid)
+);
+
+

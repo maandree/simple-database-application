@@ -1,0 +1,39 @@
+vad har ${, $} och $ skrivit tillsammans
+
+    SELECT * FROM artikel NATURAL JOIN
+    (
+      (
+        SELECT artid FROM artikel NATURAL JOIN skrev NATURAL JOIN författare
+        WHERE författare.namn = ?
+      )
+      ***{
+      INTERSECT
+      (
+        SELECT artid FROM artikel NATURAL JOIN skrev NATURAL JOIN författare
+        WHERE författare.namn = ?
+      )
+      }***
+    ) AS foobar;
+
+
+lägg till artikel $ till # med författaren #
+lägg till artikel $ till # med författarna #[{, #}] och #
+
+    INSERT INTO artikel (arttitel, nrid) VALUES (?, #) RETURNING *;
+    
+    ***{
+    INSERT INTO skrev (artid, fid) VALUES (@0.artid, #) RETURNING *;
+    }***
+
+
+lägg till artikel $ till #/# för # med författaren #
+lägg till artikel $ till #/# för # med författarna #[{, #}] och #
+
+    INSERT INTO artikel (arttitel, nrid) VALUES (?, 
+    (
+      SELECT nrid FROM nummer WHERE pubår = # AND årnr = # AND tsid = #
+    )) RETURNING *;
+    
+    ***{
+    INSERT INTO skrev (artid, fid) VALUES (@0.artid, #) RETURNING *;
+    }***
